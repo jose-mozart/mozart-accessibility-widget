@@ -17,8 +17,13 @@ and wires every control to real effects on the host page. Replaces UserWay.
 Site Settings → Custom Code → **Footer**, one line:
 
 ```html
-<script defer src="https://cdn.jsdelivr.net/gh/jose-mozart/mozart-accessibility-widget@v1.0.0/dist/mozart-a11y.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/gh/jose-mozart/mozart-accessibility-widget@v1.0.1/dist/mozart-a11y.min.js"></script>
 ```
+
+> **Use `@v1.0.1`, not `@v1.0.0`.** jsDelivr caches a tag→commit mapping and will not reliably
+> serve fresh bytes if a tag is ever *moved*. `v1.0.0`'s cache was populated against an earlier
+> build during development, so the current production release ships as the immutable tag `v1.0.1`.
+> Always pin to the latest tag; never reuse one.
 
 That's it. The widget wraps the existing page content in `#mz-a11y-content`, then mounts the
 launcher and panel **outside** that wrapper so effects (filters/zoom) never touch the widget itself.
