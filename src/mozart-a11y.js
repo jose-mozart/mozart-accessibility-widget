@@ -6,6 +6,8 @@
  * Build: node build.js  ->  dist/mozart-a11y.min.js
  * Serve: https://cdn.jsdelivr.net/gh/jose-mozart/mozart-accessibility-widget@vX.Y.Z/dist/mozart-a11y.min.js
  */
+import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
+
 (function () {
   'use strict';
 
@@ -73,67 +75,45 @@
 
   /* ---------------------------------------------------------------------------
    * 2. Pre-apply (minimise flash): write a synchronous <style> targeting the body
-   *    with the saved zoom before we build the DOM and wrap content.
+   *    with the saved BIGGER-TEXT zoom before we build the DOM and wrap content.
+   *    (Bigger Interface scales the widget UI only, so it is NOT pre-applied here.)
    * ------------------------------------------------------------------------- */
   var preStyle = doc.createElement('style');
   preStyle.id = 'mz-a11y-preapply';
-  var preZoom = (state.biggerInterface ? 1.15 : 1) * (1 + state.biggerText * 0.08);
+  var preZoom = 1 + state.biggerText * 0.08;
   if (preZoom !== 1) preStyle.textContent = 'body{zoom:' + preZoom + ';}';
   (doc.head || doc.documentElement).appendChild(preStyle);
 
   /* ---------------------------------------------------------------------------
-   * 3. SVG icons (white, inherit currentColor). Simple, recognisable glyphs.
+   * 3. Icons — real Figma glyphs (assets/symbols/*, white -> currentColor) plus a
+   *    few chrome glyphs synthesised in the same flat-fill style.
    * ------------------------------------------------------------------------- */
-  function svg(inner, vb) {
-    return '<svg viewBox="' + (vb || '0 0 24 24') + '" fill="none" stroke="currentColor" ' +
-      'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-      inner + '</svg>';
+  function alignSVG(lines) {
+    // lines: array of [x, width] bars; flat-fill style to match the asset set.
+    var bars = '';
+    var ys = [5, 10, 15, 20];
+    for (var i = 0; i < 4; i++) bars += '<rect x="' + lines[i][0] + '" y="' + ys[i] + '" width="' + lines[i][1] + '" height="2.4" rx="1.2"/>';
+    return '<svg viewBox="0 0 24 26" fill="currentColor" aria-hidden="true" focusable="false">' + bars + '</svg>';
   }
-  function svgText(t, size) {
-    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<text x="12" y="17" text-anchor="middle" font-family="-apple-system,Segoe UI,Roboto,sans-serif" ' +
-      'font-weight="600" font-size="' + (size || 15) + '" fill="currentColor">' + t + '</text></svg>';
-  }
-
-  var ICONS = {
-    biggerInterface: svg('<path d="M8 3H3v5M16 3h5v5M16 21h5v-5M8 21H3v-5"/>'),
-    biggerText: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<text x="9" y="17" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="11" fill="currentColor">A</text>' +
-      '<text x="16" y="17" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="16" fill="currentColor">A</text></svg>',
-    lineHeight: svg('<path d="M4 5l3-2 3 2M7 3v18M7 21l-3-2M7 21l3-2"/><path d="M13 5h8M13 12h8M13 19h8"/>'),
-    textSpacing: svg('<path d="M3 8l-2 4 2 4M21 8l2 4-2 4M1 12h22"/><path d="M5 4h14M5 20h14" stroke-opacity=".5"/>'),
-    readableFont: svgText('A', 17),
-    textAlign: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),       // left (default)
-    textAlignLeft: svg('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'),
-    textAlignCenter: svg('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'),
-    textAlignRight: svg('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
-    textAlignJustify: svg('<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'),
-    contrast: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" stroke="none"/>'),
-    invert: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/>'),
-    grayscale: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none" opacity=".35"/>'),
-    saturation: svg('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>'),
-    highlightLinks: svg('<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'),
-    highlightTitles: svg('<path d="M4 7V5h16v2M9 19h6M12 5v14"/>'),
-    readingGuide: svg('<path d="M3 5h18M3 19h18"/><rect x="3" y="10" width="18" height="4" rx="1" fill="currentColor" stroke="none" opacity=".9"/>'),
-    readingMask: svg('<rect x="3" y="4" width="18" height="6" rx="1" fill="currentColor" stroke="none" opacity=".5"/><rect x="3" y="14" width="18" height="6" rx="1" fill="currentColor" stroke="none" opacity=".5"/>'),
-    tooltips: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" stroke="currentColor"/>'),
-    readAloud: svg('<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12"/>'),
-    pauseMotion: svg('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'),
-    hideImages: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5L5 20"/><path d="M3 3l18 18" stroke-width="1.8"/>'),
-    muteSounds: svg('<path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/>'),
-    bigCursor: svg('<path d="M5 3l15 9-6 1 4 7-3 1-4-7-6 5V3z" fill="currentColor" stroke="none"/>'),
-    close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
-    reset: svg('<path d="M21 12a9 9 0 1 1-3-6.7M21 4v4h-4"/>'),
+  var SYNTH = {
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    // launcher accessibility person (matches Figma 22-4528 blue FAB glyph), white
     launcher: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
       '<circle cx="12" cy="4" r="2" fill="#fff"/>' +
-      '<path d="M3 8.5c2.5 1 5.7 1.5 9 1.5s6.5-.5 9-1.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' +
-      '<path d="M12 9.5v6m0 0l-3.2 6.2M12 15.5l3.2 6.2" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>'
+      '<path d="M3 8.5c2.5 1 5.7 1.5 9 1.5s6.5-.5 9-1.5" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/>' +
+      '<path d="M12 9.5v6m0 0l-3.2 6.2M12 15.5l3.2 6.2" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
+    textAlignLeft: alignSVG([[3, 18], [3, 10], [3, 18], [3, 10]]),
+    textAlignCenter: alignSVG([[3, 18], [7, 10], [3, 18], [7, 10]]),
+    textAlignRight: alignSVG([[3, 18], [11, 10], [3, 18], [11, 10]]),
+    textAlignJustify: alignSVG([[3, 18], [3, 18], [3, 18], [3, 18]])
   };
+  var ICONS = {};
+  for (var ik in ICON_SVGS) ICONS[ik] = ICON_SVGS[ik];
+  for (var sk in SYNTH) ICONS[sk] = SYNTH[sk];
 
   /* ---------------------------------------------------------------------------
    * 4. Control definitions — order & grouping match Figma frame 22-4136.
    * ------------------------------------------------------------------------- */
-  // type: 'toggle' or 'level' (with `max` dots) or 'cycle' (textAlign).
   var CARDS_TEXT = [
     { key: 'biggerText', label: 'Bigger Text', icon: 'biggerText', type: 'level', max: 4 },
     { key: 'lineHeight', label: 'Line Height', icon: 'lineHeight', type: 'level', max: 3 },
@@ -163,16 +143,17 @@
   ];
 
   /* ---------------------------------------------------------------------------
-   * 5. CSS — locked glass recipe (VERBATIM) + widget layout + effect rules.
+   * 5. CSS — locked glass recipe (VERBATIM, radius bumped 60->72 per round-2) +
+   *    widget layout + effect rules.
    * ------------------------------------------------------------------------- */
   var GLASS_CSS = [
-    /* ===== LOCKED GLASS RECIPE — do not alter (section 1 of spec) ===== */
+    /* ===== LOCKED GLASS RECIPE — material untouched; radius set to 72px ===== */
     '.mz-glass, .mz-glass--container {',
     '  --lg-base: 4, 4, 8;',
     '  --lhx: 0.669; --lhy: 0.743;',
     '  --lfx: -0.669; --lfy: -0.743;',
     '  --lt: 0.24; --dp: 38.0px;',
-    '  border-radius: 60px;',
+    '  border-radius: 72px;',
     '  corner-shape: superellipse(2.33);',
     '  box-shadow:',
     '    inset calc(var(--lhx) * 2px) calc(var(--lhy) * 2px) 0 0 rgba(255,255,255, var(--lt)),',
@@ -204,8 +185,6 @@
     '}'
   ].join('\n');
 
-  // Layout / widget chrome. Radius per-element matches each Figma node size
-  // (panel 60, cards 34, header pill 38, FAB circle) — material untouched.
   var LAYOUT_CSS = [
     '#' + ROOT_ID + ' { all: initial; }',
     '#' + ROOT_ID + ', #' + ROOT_ID + ' *, #' + ROOT_ID + ' *::before, #' + ROOT_ID + ' *::after { box-sizing: border-box; }',
@@ -268,7 +247,8 @@
     '  display: flex; align-items: center; gap: 12px; height: 56px;',
     '  padding: 0 18px; border-radius: 30px; margin-bottom: 14px; cursor: pointer;',
     '}',
-    '.mz-row .mz-row-icon { width: 22px; height: 22px; flex: 0 0 auto; }',
+    '.mz-row .mz-row-icon { width: 24px; height: 24px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }',
+    '.mz-row .mz-row-icon svg { height: 21px; width: auto; max-width: 26px; }',
     '.mz-row .mz-row-label { flex: 1 1 auto; font-size: 16px; font-weight: 500; }',
 
     /* Section label */
@@ -287,8 +267,8 @@
     '}',
     '.mz-card:hover { transform: translateY(-2px); }',
     '.mz-card:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }',
-    '.mz-card .mz-card-icon { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }',
-    '.mz-card .mz-card-icon svg { width: 30px; height: 30px; }',
+    '.mz-card .mz-card-icon { height: 30px; display: flex; align-items: center; justify-content: center; color: #fff; }',
+    '.mz-card .mz-card-icon svg { height: 28px; width: auto; max-width: 46px; }',
     '.mz-card .mz-card-label { font-size: 14.5px; font-weight: 500; line-height: 1.2; }',
     /* active state */
     '.mz-card.mz-on { box-shadow: inset 0 0 0 2px rgba(255,255,255,.85), 0 8px 32px rgba(0,0,0,.38); }',
@@ -307,18 +287,21 @@
     '.mz-row.mz-on .mz-switch { background: #34c759; }',
     '.mz-row.mz-on .mz-switch::after { transform: translateX(20px); }',
 
-    /* footer */
+    /* Reset — keeps the liquid-glass material with a GREEN tint layered in (not a flat fill) */
     '.mz-reset {',
-    '  width: 100%; height: 48px; border: none; border-radius: 24px; cursor: pointer;',
-    '  background: #30d158; color: #04210f; font-size: 15px; font-weight: 600;',
+    '  width: 100%; height: 50px; border: none; border-radius: 26px; cursor: pointer;',
+    '  background: rgba(48,209,88,0.34) !important; color: #fff; font-size: 15px; font-weight: 600;',
     '  display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;',
+    '  text-shadow: 0 1px 2px rgba(0,0,0,.35);',
     '}',
-    '.mz-reset svg { width: 17px; height: 17px; }',
-    '.mz-reset:hover { background: #28bb4d; }',
+    '.mz-reset svg { width: 17px; height: 17px; color: #fff; }',
+    '.mz-reset:hover { background: rgba(48,209,88,0.48) !important; }',
     '.mz-reset:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }',
     '.mz-saved-note { text-align: center; font-size: 12px; color: rgba(255,255,255,.5); margin: 12px 0 14px; }',
-    '.mz-brand { text-align: center; font-size: 17px; font-weight: 600; letter-spacing: .2px; color: rgba(255,255,255,.85); padding-bottom: 10px; }',
-    '.mz-brand span { color: rgba(255,255,255,.5); font-weight: 400; }',
+
+    /* Logo tile — wordmark wrapped in its own glass tile (matches Figma footer) */
+    '.mz-logo-tile { display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 28px; margin-bottom: 8px; }',
+    '.mz-logo-tile svg { height: 18px; width: auto; color: #fff; opacity: .95; }',
 
     /* Reading guide / mask / tooltip overlays (in widget layer, above filtered content) */
     '#mz-guide { position: fixed; left: 0; width: 100%; height: 0; pointer-events: none; z-index: 2147483640;',
@@ -368,7 +351,6 @@
     while (doc.body.firstChild) content.appendChild(doc.body.firstChild);
     doc.body.appendChild(content);
   }
-  // Pre-apply style was on <body>; move zoom onto the wrapper now.
   preStyle.parentNode && preStyle.parentNode.removeChild(preStyle);
 
   // SVG filter (once)
@@ -426,9 +408,9 @@
       sectionHTML('Color', CARDS_COLOR) +
       sectionHTML('Reading & Focus', CARDS_READING) +
       sectionHTML('Media', CARDS_MEDIA) +
-      '<button class="mz-reset" type="button" id="mz-reset">' + ICONS.reset + ' Reset All Settings</button>' +
+      '<button class="mz-reset mz-glass" type="button" id="mz-reset">' + ICONS.reset + ' Reset All Settings</button>' +
       '<p class="mz-saved-note">Your settings are saved on this device.</p>' +
-      '<div class="mz-brand">Mozart<span>&amp;co</span></div>' +
+      '<div class="mz-logo-tile mz-glass" aria-label="Mozart & Co">' + LOGO_SVG + '</div>' +
     '</div>';
 
   root.appendChild(fab);
@@ -479,16 +461,27 @@
    * 7. Effects — apply state to the host content wrapper + overlays.
    * ------------------------------------------------------------------------- */
   function applyAll() {
-    // zoom (bigger interface + bigger text combined)
-    var zoom = (state.biggerInterface ? 1.15 : 1) * (1 + state.biggerText * 0.08);
-    if (zoom !== 1) {
-      if ('zoom' in content.style) content.style.zoom = String(zoom);
-      else { content.style.transform = 'scale(' + zoom + ')'; content.style.transformOrigin = 'top ' + (isRTL ? 'right' : 'left'); content.style.width = (100 / zoom) + '%'; }
+    // Bigger Text -> zoom the host CONTENT only.
+    var textZoom = 1 + state.biggerText * 0.08;
+    if (textZoom !== 1) {
+      if ('zoom' in content.style) content.style.zoom = String(textZoom);
+      else { content.style.transform = 'scale(' + textZoom + ')'; content.style.transformOrigin = 'top ' + (isRTL ? 'right' : 'left'); content.style.width = (100 / textZoom) + '%'; }
     } else {
       content.style.zoom = ''; content.style.transform = ''; content.style.width = '';
     }
 
-    // class-driven effects
+    // Bigger Interface -> scale the WIDGET UI only (panel + launcher), not the host.
+    var uiZoom = state.biggerInterface ? 1.15 : 1;
+    if ('zoom' in panel.style) { panel.style.zoom = uiZoom === 1 ? '' : String(uiZoom); fab.style.zoom = uiZoom === 1 ? '' : String(uiZoom); }
+    else {
+      var t = uiZoom === 1 ? '' : 'scale(' + uiZoom + ')';
+      panel.style.transformOrigin = 'bottom ' + (isRTL ? 'left' : 'right');
+      fab.style.transformOrigin = 'center';
+      // panel keeps its open/close transform; only nudge fab to avoid clobbering
+      fab.style.transform = t;
+    }
+
+    // class-driven effects on content
     var cl = content.classList;
     setClass(cl, 'mz-lh-1', state.lineHeight === 1);
     setClass(cl, 'mz-lh-2', state.lineHeight === 2);
@@ -529,10 +522,7 @@
   /* Reading guide + mask follow the pointer */
   var pointerY = window.innerHeight / 2;
   var overlayBound = false;
-  function onPointerMove(e) {
-    pointerY = e.clientY;
-    positionOverlays();
-  }
+  function onPointerMove(e) { pointerY = e.clientY; positionOverlays(); }
   function positionOverlays() {
     if (state.readingGuide) { guide.style.top = (pointerY - 20) + 'px'; }
     if (state.readingMask) {
@@ -630,7 +620,6 @@
    * 8. UI sync — reflect state into card visuals/ARIA
    * ------------------------------------------------------------------------- */
   function syncUI() {
-    // toggle row
     var row = panel.querySelector('.mz-row');
     setClass(row.classList, 'mz-on', state.biggerInterface);
     row.setAttribute('aria-pressed', String(state.biggerInterface));
@@ -643,17 +632,12 @@
       var val = state[key];
       var on = type === 'toggle' ? !!val : val > 0;
       setClass(card.classList, 'mz-on', on);
-      if (type === 'toggle') {
-        card.setAttribute('aria-pressed', String(!!val));
-      } else {
-        card.setAttribute('aria-valuenow', String(val));
-      }
-      // dots
+      if (type === 'toggle') card.setAttribute('aria-pressed', String(!!val));
+      else card.setAttribute('aria-valuenow', String(val));
       var dots = card.querySelectorAll('.mz-dots i');
       for (var d = 0; d < dots.length; d++) setClass(dots[d].classList, 'mz-dot-on', d < val);
-      // text-align icon swaps with state
       if (key === 'textAlign') {
-        var icn = ['textAlignLeft', 'textAlignLeft', 'textAlignCenter', 'textAlignRight', 'textAlignJustify'][val];
+        var icn = val === 0 ? 'textAlign' : ['', 'textAlignLeft', 'textAlignCenter', 'textAlignRight', 'textAlignJustify'][val];
         card.querySelector('.mz-card-icon').innerHTML = ICONS[icn];
       }
     }
@@ -677,9 +661,7 @@
       handleControl(ctl.getAttribute('data-key'), ctl.getAttribute('data-type') || 'toggle', +ctl.getAttribute('data-max') || 0);
       return;
     }
-    if (e.target.closest('#mz-reset')) {
-      reset(); applyAll(); syncUI();
-    }
+    if (e.target.closest('#mz-reset')) { reset(); applyAll(); syncUI(); }
   });
   panel.addEventListener('keydown', function (e) {
     var ctl = e.target.closest('[data-key]');
@@ -687,23 +669,16 @@
     var type = ctl.getAttribute('data-type') || 'toggle';
     var max = +ctl.getAttribute('data-max') || 0;
     var key = ctl.getAttribute('data-key');
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleControl(key, type, max);
-    } else if (type !== 'toggle' && (e.key === 'ArrowRight' || e.key === 'ArrowUp')) {
-      e.preventDefault(); state[key] = Math.min(max, state[key] + 1); save(); applyAll(); syncUI();
-    } else if (type !== 'toggle' && (e.key === 'ArrowLeft' || e.key === 'ArrowDown')) {
-      e.preventDefault(); state[key] = Math.max(0, state[key] - 1); save(); applyAll(); syncUI();
-    }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleControl(key, type, max); }
+    else if (type !== 'toggle' && (e.key === 'ArrowRight' || e.key === 'ArrowUp')) { e.preventDefault(); state[key] = Math.min(max, state[key] + 1); save(); applyAll(); syncUI(); }
+    else if (type !== 'toggle' && (e.key === 'ArrowLeft' || e.key === 'ArrowDown')) { e.preventDefault(); state[key] = Math.max(0, state[key] - 1); save(); applyAll(); syncUI(); }
   });
 
   /* ---------------------------------------------------------------------------
    * 10. Open / close + focus management
    * ------------------------------------------------------------------------- */
   var isOpen = false;
-  function focusables() {
-    return panel.querySelectorAll('button, [tabindex="0"], [role="button"], [role="slider"]');
-  }
+  function focusables() { return panel.querySelectorAll('button, [tabindex="0"], [role="button"], [role="slider"]'); }
   function open() {
     if (isOpen) return;
     isOpen = true;

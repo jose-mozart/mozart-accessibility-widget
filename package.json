@@ -4,7 +4,7 @@
   "description": "Mozart & Co self-hosted Liquid Glass accessibility widget. Self-injecting, single-file. Replaces UserWay on Webflow client sites.",
   "private": true,
   "scripts": {
-    "build": "esbuild src/mozart-a11y.js --minify --legal-comments=inline --target=es2018 --outfile=dist/mozart-a11y.min.js",
+    "build": "node build.js",
     "test": "node test/verify.mjs"
   },
   "devDependencies": {

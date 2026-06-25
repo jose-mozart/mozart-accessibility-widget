@@ -66,7 +66,9 @@ try {
   await page.locator('.mz-card[data-key="biggerText"]').click(); // cycle back to 0
 
   await page.locator('.mz-row[data-key="biggerInterface"]').click();
-  ok(parseFloat(await page.locator('#mz-a11y-content').evaluate(el => el.style.zoom)) === 1.15, 'bigger interface -> zoom 1.15');
+  await page.waitForTimeout(50);
+  ok(parseFloat(await page.locator('#mz-panel').evaluate(el => el.style.zoom)) === 1.15, 'bigger interface -> WIDGET panel zoom 1.15');
+  ok((await page.locator('#mz-a11y-content').evaluate(el => el.style.zoom)) !== '1.15', 'bigger interface does NOT zoom host content');
   await page.locator('.mz-row[data-key="biggerInterface"]').click();
 
   await page.locator('.mz-card[data-key="lineHeight"]').click();
@@ -163,6 +165,32 @@ try {
   const hAfter = await page.locator('#mz-header').evaluate(el => el.getBoundingClientRect().top);
   ok(Math.abs(hBefore - hAfter) < 1, 'header stays pinned during scroll');
   await page.locator('#mz-panel').screenshot({ path: SHOT('panel-scrolled.png') });
+  await ctx.close();
+
+  // R2. Round-2 corrections
+  console.log('R2. Round-2 corrections');
+  ({ ctx, page } = await fresh());
+  await page.locator('#mz-fab').click();
+  await page.waitForTimeout(300);
+  // C4: refraction filter actually wired into computed backdrop-filter (not silent fallback)
+  const cbf = await page.locator('#mz-panel').evaluate(el => getComputedStyle(el).backdropFilter || getComputedStyle(el).webkitBackdropFilter);
+  ok(/url\(.*#lg-refraction.*\)/.test(cbf), 'C4: computed backdrop-filter contains url(#lg-refraction)');
+  // C4: radius 72
+  ok(Math.round(parseFloat(await page.locator('#mz-panel').evaluate(el => getComputedStyle(el).borderTopLeftRadius))) === 72, 'C4: panel radius is 72px');
+  // C1: reset keeps glass material (has backdrop-filter) + green-tinted background
+  const rbf = await page.locator('#mz-reset').evaluate(el => getComputedStyle(el).backdropFilter || getComputedStyle(el).webkitBackdropFilter);
+  ok(/blur/.test(rbf), 'C1: reset button retains glass backdrop-filter');
+  const rbg = await page.locator('#mz-reset').evaluate(el => getComputedStyle(el).backgroundColor);
+  ok(/^rgba?\(\s*48,\s*209,\s*88/.test(rbg), 'C1: reset background is green-tinted rgba (' + rbg + ')');
+  // C2: logo wrapped in its own glass tile, with an inlined svg
+  ok(await page.locator('.mz-logo-tile.mz-glass svg').count() === 1, 'C2: Mozart logo inside a .mz-glass tile');
+  // real assets inlined (AA glyph etc.) — every card has an svg
+  const cardSvgs = await page.locator('.mz-card .mz-card-icon svg').count();
+  ok(cardSvgs === 19, 'real glyphs inlined on all 19 cards (' + cardSvgs + ')');
+  await page.locator('#mz-panel').screenshot({ path: SHOT('panel-r2.png') });
+  await page.locator('#mz-scroll').evaluate(el => el.scrollTo(0, 9999));
+  await page.waitForTimeout(150);
+  await page.locator('#mz-panel').screenshot({ path: SHOT('panel-r2-bottom.png') });
   await ctx.close();
 
 } catch (e) {
