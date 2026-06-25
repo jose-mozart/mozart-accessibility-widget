@@ -216,9 +216,11 @@ import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
     '}',
     '#mz-panel.mz-open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }',
 
-    /* Pinned header (sibling ABOVE the scroll region — never sticky) */
+    /* Pinned header (sibling ABOVE the scroll region — never sticky).
+       Breathing room is the header's OWN margin (top + sides), which lives
+       outside the scroll region — so it never reintroduces a clip gap. */
     '#mz-header {',
-    '  flex: 0 0 auto; position: relative; z-index: 2; margin: 6px 6px 0;',
+    '  flex: 0 0 auto; position: relative; z-index: 2; margin: 16px 14px 0;',
     '  height: 72px; border-radius: 38px; padding: 0 14px 0 26px;',
     '  display: flex; align-items: center; justify-content: space-between;',
     '}',
@@ -232,10 +234,12 @@ import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
     '#mz-close:hover { background: rgba(255,255,255,.18); }',
     '#mz-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }',
 
-    /* Scroll region — clipped box; content hard-clips at the header bottom edge */
+    /* Scroll region — clipped box. Its top edge (the hard-clip line) sits FLUSH
+       at the header bottom edge: margin-top:0 so no dead gap. The padding-top is
+       resting inset only; overflow still clips at the scroll box top = header bottom. */
     '#mz-scroll {',
     '  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;',
-    '  padding: 18px 22px 8px; margin-top: 8px;',
+    '  padding: 18px 22px 8px; margin-top: 0;',
     '  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;',
     '  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent;',
     '}',
@@ -301,7 +305,10 @@ import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
 
     /* Logo tile — wordmark wrapped in its own glass tile (matches Figma footer) */
     '.mz-logo-tile { display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 28px; margin-bottom: 8px; }',
-    '.mz-logo-tile svg { height: 18px; width: auto; color: #fff; opacity: .95; }',
+    '.mz-logo-link { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border-radius: 28px; text-decoration: none; cursor: pointer; }',
+    '.mz-logo-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }',
+    '.mz-logo-link:hover svg { opacity: 1; }',
+    '.mz-logo-tile svg { height: 18px; width: auto; color: #fff; opacity: .9; transition: opacity .15s ease; }',
 
     /* Reading guide / mask / tooltip overlays (in widget layer, above filtered content) */
     '#mz-guide { position: fixed; left: 0; width: 100%; height: 0; pointer-events: none; z-index: 2147483640;',
@@ -410,7 +417,9 @@ import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
       sectionHTML('Media', CARDS_MEDIA) +
       '<button class="mz-reset mz-glass" type="button" id="mz-reset">' + ICONS.reset + ' Reset All Settings</button>' +
       '<p class="mz-saved-note">Your settings are saved on this device.</p>' +
-      '<div class="mz-logo-tile mz-glass" aria-label="Mozart & Co">' + LOGO_SVG + '</div>' +
+      '<div class="mz-logo-tile mz-glass">' +
+        '<a class="mz-logo-link" href="https://mozartcompany.com/" target="_blank" rel="noopener noreferrer" aria-label="Mozart & Co — opens mozartcompany.com in a new tab">' + LOGO_SVG + '</a>' +
+      '</div>' +
     '</div>';
 
   root.appendChild(fab);
@@ -678,7 +687,7 @@ import { ICON_SVGS, LOGO_SVG } from './assets.generated.js';
    * 10. Open / close + focus management
    * ------------------------------------------------------------------------- */
   var isOpen = false;
-  function focusables() { return panel.querySelectorAll('button, [tabindex="0"], [role="button"], [role="slider"]'); }
+  function focusables() { return panel.querySelectorAll('button, a[href], [tabindex="0"], [role="button"], [role="slider"]'); }
   function open() {
     if (isOpen) return;
     isOpen = true;

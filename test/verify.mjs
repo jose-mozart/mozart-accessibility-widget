@@ -164,7 +164,46 @@ try {
   await page.waitForTimeout(100);
   const hAfter = await page.locator('#mz-header').evaluate(el => el.getBoundingClientRect().top);
   ok(Math.abs(hBefore - hAfter) < 1, 'header stays pinned during scroll');
+  // tweak #1: clip line (scroll top) sits FLUSH at header bottom edge, no dead gap
+  const geo = await page.evaluate(() => {
+    const h = document.querySelector('#mz-header').getBoundingClientRect();
+    const s = document.querySelector('#mz-scroll').getBoundingClientRect();
+    return { headerBottom: h.bottom, scrollTop: s.top };
+  });
+  ok(Math.abs(geo.scrollTop - geo.headerBottom) <= 1, 'clip line flush at header bottom (gap=' + (geo.scrollTop - geo.headerBottom).toFixed(1) + 'px)');
+  // tweak #2: breathing room is header margin (header top > panel inner top)
+  const room = await page.evaluate(() => {
+    const p = document.querySelector('#mz-panel').getBoundingClientRect();
+    const h = document.querySelector('#mz-header').getBoundingClientRect();
+    return h.top - p.top;
+  });
+  ok(room >= 12, 'breathing room above header (' + room.toFixed(0) + 'px margin)');
+  // mid-scroll screenshot (a card should clip exactly under the header, no floating half-card in a gap)
+  await page.locator('#mz-scroll').evaluate(el => el.scrollTo(0, 140));
+  await page.waitForTimeout(120);
+  await page.locator('#mz-panel').screenshot({ path: SHOT('panel-midscroll.png') });
+  await page.locator('#mz-scroll').evaluate(el => el.scrollTo(0, 300));
+  await page.waitForTimeout(100);
   await page.locator('#mz-panel').screenshot({ path: SHOT('panel-scrolled.png') });
+
+  // tweak #3: logo linked, new tab, secure rel, keyboard-focusable + visible focus
+  const a = page.locator('.mz-logo-tile a.mz-logo-link');
+  ok(await a.count() === 1, 'logo wrapped in anchor inside glass tile');
+  ok(await a.getAttribute('href') === 'https://mozartcompany.com/', 'logo href -> mozartcompany.com');
+  ok(await a.getAttribute('target') === '_blank', 'logo opens in new tab');
+  ok(/noopener/.test(await a.getAttribute('rel')) && /noreferrer/.test(await a.getAttribute('rel')), 'logo rel=noopener noreferrer');
+  const reachable = await page.evaluate(() => {
+    const a = document.querySelector('.mz-logo-link'); a.focus();
+    return document.activeElement === a;
+  });
+  ok(reachable, 'logo anchor is keyboard-focusable');
+  const foc = await page.evaluate(() => {
+    for (const s of document.styleSheets) {
+      try { for (const r of s.cssRules) if (/\.mz-logo-link:focus-visible/.test(r.selectorText || '') && /outline/.test(r.style.cssText)) return true; } catch (e) {}
+    }
+    return false;
+  });
+  ok(foc, 'logo anchor has a :focus-visible outline rule');
   await ctx.close();
 
   // R2. Round-2 corrections
