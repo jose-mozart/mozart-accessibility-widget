@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sample Webflow-like page</title>
+  <style>
+    * { margin: 0; box-sizing: border-box; }
+    body { font-family: Georgia, "Times New Roman", serif; color: #1a1a1a; background: #fff; line-height: 1.4; }
+    header { background: #0b1a2b; color: #fff; padding: 18px 40px; display: flex; gap: 24px; align-items: center; }
+    header nav a { color: #cfe3ff; margin-right: 18px; text-decoration: none; }
+    .hero { padding: 60px 40px; background: linear-gradient(135deg,#1457b8,#7a3df0); color: #fff; }
+    .hero h1 { font-size: 40px; margin-bottom: 12px; }
+    .hero img { display: block; margin-top: 20px; width: 320px; max-width: 100%; border-radius: 8px; }
+    main { max-width: 760px; margin: 0 auto; padding: 40px; }
+    main h2 { font-size: 28px; margin: 28px 0 12px; }
+    main p { margin-bottom: 16px; font-size: 17px; }
+    main a { color: #1457b8; }
+    .bg { height: 220px; margin: 24px 0; border-radius: 10px;
+      background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22220%22%3E%3Crect width=%22600%22 height=%22220%22 fill=%22%23e0853d%22/%3E%3C/svg%3E'); }
+    footer { background: #0b1a2b; color: #9db4cc; padding: 30px 40px; }
+    .spin { width: 40px; height: 40px; border-radius: 8px; background: #e0853d; animation: spin 1.5s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Acme Client</strong>
+    <nav><a href="#a">Home</a><a href="#b">About</a><a href="#c">Services</a><a href="#d">Contact</a></nav>
+  </header>
+  <section class="hero">
+    <h1>Welcome to the future</h1>
+    <p>We build remarkable digital experiences for forward-thinking brands.</p>
+    <img alt="Product shot" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22180%22%3E%3Crect width=%22320%22 height=%22180%22 fill=%22%23ffce54%22/%3E%3Ccircle cx=%22160%22 cy=%2290%22 r=%2260%22 fill=%22%23e0533d%22/%3E%3C/svg%3E">
+  </section>
+  <main>
+    <h2>About our work</h2>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. We craft accessible, performant websites that load fast and read clearly. Visit our <a href="#more">case studies</a> for details.</p>
+    <p title="This is a helpful tooltip about quality">Quality is never an accident; it is always the result of intelligent effort and careful attention to detail.</p>
+    <div class="bg" role="img" aria-label="decorative banner"></div>
+    <h2>Our motion</h2>
+    <p>The box below animates continuously to test the Pause Motion control.</p>
+    <div class="spin"></div>
+    <p>Reach us at <a href="mailto:hi@acme.test">hi@acme.test</a> any time.</p>
+    <video width="320" muted loop playsinline aria-label="sample video"></video>
+  </main>
+  <footer>© Acme Client. All rights reserved.</footer>
+
+  <!-- widget under test (path swapped to dist by the verify script) -->
+  <script defer src="../dist/mozart-a11y.min.js"></script>
+</body>
+</html>
